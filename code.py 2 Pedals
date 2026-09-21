@@ -4,129 +4,103 @@ import digitalio
 import analogio
 import time
 import usb_hid
+from hid_gamepad import Gamepad
 import adafruit_as5600
-
+ 
 # ==========================================
-# 1. HARDWARE SETUP
+# 1. HARDWARE CALIBRATION
 # ==========================================
-# Steering Wheel: I2C connection to AS5600 (SCL -> GP1, SDA -> GP0)
+THROTTLE_REST    = 800
+THROTTLE_FLOORED = 23300
+BRAKE_REST       = 3400
+BRAKE_FLOORED    = 24000
+ 
+STEERING_CENTER  = 1030
+SENSOR_RANGE     = 4096
+MAX_SWEEP        = 1675
+ 
+# ==========================================
+# 2. INITIALIZATION
+# ==========================================
+gamepad = Gamepad(usb_hid.devices)
+ 
 i2c = busio.I2C(board.GP1, board.GP0)
 as5600 = adafruit_as5600.AS5600(i2c)
-
-# Dual Pedals: 10k Potentiometer Wipers on GP26 (Throttle) & GP27 (Brake)
-throttle_adc = analogio.AnalogIn(board.GP26)
-brake_adc    = analogio.AnalogIn(board.GP27)
-
-def setup_btn(pin):
+ 
+throttle_pin = analogio.AnalogIn(board.GP26)
+brake_pin    = analogio.AnalogIn(board.GP27)
+ 
+ 
+def init_button(pin):
     btn = digitalio.DigitalInOut(pin)
     btn.direction = digitalio.Direction.INPUT
     btn.pull = digitalio.Pull.UP
     return btn
-
-# 8 Button Layout (GP6 through GP13)
+ 
+ 
 buttons = [
-    setup_btn(board.GP6),   # Button 1
-    setup_btn(board.GP7),   # Button 2
-    setup_btn(board.GP8),   # Button 3
-    setup_btn(board.GP9),   # Button 4
-    setup_btn(board.GP10),  # Shifter Left
-    setup_btn(board.GP11),  # Shifter Right
-    setup_btn(board.GP12),  # Button 7
-    setup_btn(board.GP13)   # Button 8
+    init_button(board.GP6),
+    init_button(board.GP7),
+    init_button(board.GP8),
+    init_button(board.GP9),
+    init_button(board.GP10),
+    init_button(board.GP11),
+    init_button(board.GP12),
+    init_button(board.GP13)
 ]
-
+ 
 # ==========================================
-# 2. CALIBRATION CONSTANTS
+# 3. MAPPING FUNCTIONS
 # ==========================================
-# Throttle Pedal Calibration (Measured data)
-THROTTLE_REST    = 27700  # Map to 0 byte (Released)
-THROTTLE_FLOORED = 8900   # Map to 255 byte (Full Throttle)
-
-# Brake Pedal Calibration (Update these once you measure your brake raw values!)
-BRAKE_REST       = 28000  # Map to 0 byte (Released)
-BRAKE_FLOORED    = 9000   # Map to 255 byte (Full Brake)
-
-def scale_wheel(val):
-    """Scales 12-bit AS5600 reading (0-4095) down to 8-bit HID (0-255)."""
-    REVERSED = False 
-    wheel_offset = 2048  # Physical center alignment point
-    
-    calibrated_val = (val - wheel_offset) % 4096
-    if REVERSED:
-        calibrated_val = 4095 - calibrated_val
-        
-    s = int((calibrated_val / 4095) * 255)
-    return max(0, min(255, s))
-
-def scale_pedal_calibrated(raw_val, rest_val, floored_val):
-    """
-    Automatically scales any pedal setup (whether raw values sweep UP or DOWN)
-    into a clean 0 to 255 byte array for Windows.
-    """
-    # 1. SWEEP DOWN SETUP (Rest is higher than Floored)
-    if rest_val > floored_val:
-        if raw_val > rest_val: raw_val = rest_val
-        if raw_val < floored_val: raw_val = floored_val
-        scaled = int(((rest_val - raw_val) / (rest_val - floored_val)) * 255)
-        
-    # 2. SWEEP UP SETUP (Rest is lower than Floored)
+def map_pedal(x, in_rest, in_floored):
+    if in_rest < in_floored:
+        clamped = max(in_rest, min(x, in_floored))
+        scaled = (clamped - in_rest) * 255.0 / (in_floored - in_rest)
     else:
-        if raw_val < rest_val: raw_val = rest_val
-        if raw_val > floored_val: raw_val = floored_val
-        scaled = int(((raw_val - rest_val) / (floored_val - rest_val)) * 255)
-
-    return max(0, min(255, scaled))
-
-# Locate USB Gamepad Interface
-gamepad_dev = None
-for device in usb_hid.devices:
-    if device.usage == 0x05:
-        gamepad_dev = device
-        break
-
-print("✅ Dual Pedal Rig Active: Steering (AS5600) + Throttle (GP26) + Brake (GP27)")
-
+        clamped = min(in_rest, max(x, in_floored))
+        scaled = (in_rest - clamped) * 255.0 / (in_floored - in_rest)
+    return int(max(0, min(255, scaled)))
+ 
+ 
+def get_steering_axis(raw_angle):
+    diff = raw_angle - STEERING_CENTER
+ 
+    if diff > SENSOR_RANGE / 2:
+        diff -= SENSOR_RANGE
+    elif diff < -SENSOR_RANGE / 2:
+        diff += SENSOR_RANGE
+ 
+    clamped_diff = max(-MAX_SWEEP, min(MAX_SWEEP, diff))
+    scaled = int((clamped_diff / float(MAX_SWEEP)) * 127)
+    return max(-127, min(127, scaled))
+ 
+ 
 # ==========================================
-# 3. MAIN RUNTIME LOOP (100Hz)
+# 4. MAIN LOOP
 # ==========================================
+print("Controller Active on Report ID 5!")
+ 
+last_steering_hid = 0
+ 
 while True:
-    if gamepad_dev:
-        # 1. Process Steering (X-Axis)
-        raw_angle = as5600.angle
-        if raw_angle < 10: raw_angle = 0
-        if raw_angle > 4085: raw_angle = 4095
-        x_wheel = scale_wheel(raw_angle)
-        
-        # 2. Process Accelerator Pedal (Y-Axis)
-        y_throttle = scale_pedal_calibrated(
-            throttle_adc.value, 
-            THROTTLE_REST, 
-            THROTTLE_FLOORED
-        )
-        
-        # 3. Process Brake Pedal (Z-Axis)
-        z_brake = scale_pedal_calibrated(
-            brake_adc.value,
-            BRAKE_REST,
-            BRAKE_FLOORED
-        )
-        
-        # 4. Unused Rz axis channel (Zeroed out)
-        rz_unused = 0
-        
-        # 5. Pack Buttons into bitwise byte array
-        b_low = 0
-        for idx, btn in enumerate(buttons):
-            if not btn.value:  # Active LOW (pressed)
-                b_low |= (1 << idx)
-        b_high = 0
-
-        # 6. Dispatch USB Report: [Buttons_Low, Buttons_High, Steering, Throttle, Brake, Unused]
-        report = bytearray([b_low, b_high, x_wheel, y_throttle, z_brake, rz_unused])
-        
-        try:
-            gamepad_dev.send_report(report)
-        except Exception:
-            pass
-
-    time.sleep(0.01)  # Locked 100Hz Polling Rate
+    # Steering
+    try:
+        last_steering_hid = get_steering_axis(as5600.angle)
+    except Exception:
+        pass
+    steering_hid = last_steering_hid
+ 
+    # Pedals
+    throttle_hid = map_pedal(throttle_pin.value, THROTTLE_REST, THROTTLE_FLOORED)
+    brake_hid    = map_pedal(brake_pin.value, BRAKE_REST, BRAKE_FLOORED)
+ 
+    # Buttons
+    button_mask = 0
+    for i, btn in enumerate(buttons):
+        if not btn.value:
+            button_mask |= (1 << i)
+ 
+    # Transmit
+    gamepad.report(buttons=button_mask, x=steering_hid, y=throttle_hid, z=brake_hid, rz=0)
+ 
+    time.sleep(0.005)
