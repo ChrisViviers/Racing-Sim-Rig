@@ -126,7 +126,7 @@ Because custom gear-driven potentiometers vary by build, calibrate your pedal li
 2. Update the constants in `code.py`:
 
 \`\`\`python
-# Measured calibration limits
+#### Measured calibration limits
 THROTTLE_REST    = 800
 THROTTLE_FLOORED = 23300
 BRAKE_REST       = 3400
