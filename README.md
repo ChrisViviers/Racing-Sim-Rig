@@ -42,6 +42,7 @@ This project reads 12-bit contactless magnetic steering data (0–4095) and 16-b
 | **8mm Steel Rod & Bearings**         | Set      | Shaft stock used across the pedal, steering, and shifter parts  |
 | **Laser Cut / 3D Printed Parts**     | Set      | See [3D Printed & Laser Cut Parts](#3d-printed--laser-cut-parts) |
 | **Breadboard / Custom PCB**          | 1        | Circuit interconnects                                            |
+| **M5x35 Nuts & Bolts**          | 20        | Connecting Laser Cuts                                            |
 
 ---
 
