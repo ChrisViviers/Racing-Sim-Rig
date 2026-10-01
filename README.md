@@ -32,17 +32,35 @@ This project reads 12-bit contactless magnetic steering data (0–4095) and 16-b
 | Component                           | Quantity | Description / Notes                                          |
 | ------------------------------------ | -------- | -------------------------------------------------------------- |
 | **Raspberry Pi Pico 2WH**            | 1        | RP2350 microcontroller running CircuitPython                   |
-| **Adafruit AS5600 Breakout**         | 1        | 12-bit I2C Magnetic Rotary Encoder                              |
-| **Diametric Magnet**                 | 1        | Neodymium disc magnet (**must be diametrically magnetized**)   |
+| **Adafruit AS5600 Breakout**         | 3        | 12-bit I2C Magnetic Rotary Encoder                              |
+| **Diametric Magnet**                 | 3        | Neodymium disc magnet (**must be diametrically magnetized**)   |
 | **10k Linear Potentiometers (B10K)** | 2        | Throttle and brake pedal sensors                                |
-| **Tactile Buttons / Switches**       | 8        | Inputs for wheel buttons and paddle shifters                    |
+| **Switches**       | 2        | Inputs for wheel buttons and paddle shifters                    |
 | **Timing Belt & Pulleys**            | 1 set    | Drives the 20T potentiometer gear from the 80T pedal gear        |
-| **RJ45 Breakout Modules**            | 2        | Modular connection for floor pedals to wheel base                |
-| **Cat5e / Cat6 Patch Cable**         | 1        | Umbilical cable connecting pedals to steering wheel housing     |
+| **RJ45 Breakout Modules**            | 4        | Modular connection for floor pedals to wheel base                |
+| **Cat5e / Cat6 Patch Cable**         | 2        | Umbilical cable connecting pedals to steering wheel housing     |
 | **8mm Steel Rod & Bearings**         | Set      | Shaft stock used across the pedal, steering, and shifter parts  |
 | **Laser Cut / 3D Printed Parts**     | Set      | See [3D Printed & Laser Cut Parts](#3d-printed--laser-cut-parts) |
-| **Breadboard / Custom PCB**          | 1        | Circuit interconnects                                            |
+| **Prototyping Board**          | 1        | Circuit interconnects                                            |
 | **M5x35 Nuts & Bolts**          | 20        | Connecting Laser Cuts                                            |
+| **M5x16 Nuts & Bolts**          | 15        | Connecting Laser Cuts                                            |
+| **M5 Threaded Inserts**          | 4        | Connecting Laser Cuts                                            |
+| **M3x16 Nuts & Bolts**          | 20        | Connecting Laser Cuts                                            |
+| **M2.5x20 Nuts & Bolts**          | 4        | Connecting Laser Cuts                                            |
+| **M2.5x16 Nuts & Bolts**          | 12        | Connecting Laser Cuts                                            |
+| **6mm MDF Sheert 1000mmx600mm**          | 1        | Material for Laser Cuts                                            |
+| **85mm Compression Spring**          | 2        | For Lifting Pedals                                            |
+| **Qwiic JST-SH 4-pin to Male Jumper Wires**          | 3        | For Connecting AS5600 sensors                                            |
+| **8mm Shaft Collar**          | 4        | For Keeping Rods in Place                                            |
+| **200mm Male to Male Jumper Cables**          | 4        | Circuit interconnects                                            |
+| **100mm Male to Male Jumper Cables**          | 12        | Circuit interconnects                                            |
+| **8mm Pillow Block Bearing**          | 6        | Connecting Laser Cuts                                            |
+| **8mm 8mm Flange Pillow Block Bearing**          | 4        | Connecting Laser Cuts                                            |
+| **8mm Steel Rod & Bearings 90mm**         | 1      | Shaft stock used across the pedal, steering, and shifter parts  |
+| **8mm Steel Rod & Bearings 200mm**         | 1      | Shaft stock used across the pedal, steering, and shifter parts  |
+| **8mm Steel Rod & Bearings 160mm**         | 2      | Shaft stock used across the pedal, steering, and shifter parts  |
+| **8mm Steel Rod & Bearings 70mm**         | 2      | Shaft stock used across the pedal, steering, and shifter parts  |
+| **8mm Steel Rod & Bearings 125mm**         | 2      | Shaft stock used across the pedal, steering, and shifter parts  |
 
 ---
 
