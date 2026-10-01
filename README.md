@@ -36,7 +36,7 @@ This project reads 12-bit contactless magnetic steering data (0–4095) and 16-b
 | **Diametric Magnet**                 | 3        | Neodymium disc magnet (**must be diametrically magnetized**)   |
 | **10k Linear Potentiometers (B10K)** | 2        | Throttle and brake pedal sensors                                |
 | **Switches**       | 2        | Inputs for wheel buttons and paddle shifters                    |
-| **Timing Belt & Pulleys**            | 1 set    | Drives the 20T potentiometer gear from the 80T pedal gear        |
+| **Timing Belt & Pulleys**            | Set    | Drives the 20T potentiometer gear from the 80T pedal gear        |
 | **RJ45 Breakout Modules**            | 4        | Modular connection for floor pedals to wheel base                |
 | **Cat5e / Cat6 Patch Cable**         | 2        | Umbilical cable connecting pedals to steering wheel housing     |
 | **8mm Steel Rod & Bearings**         | Set      | Shaft stock used across the pedal, steering, and shifter parts  |
