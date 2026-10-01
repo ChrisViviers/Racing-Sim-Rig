@@ -71,12 +71,14 @@ All CAD source files are in the repository root:
 | File | Description |
 | ---- | ------------ |
 | [`racingSimPotFullLaser6mm.svg`](https://github.com/ChrisViviers/Racing-Sim-Rig/blob/main/racingSimPotFullLaser6mm.svg) | Laser cut template for the entire rig frame (6mm material). |
+| [`RacingSim HE Blueprint.svg`](https://github.com/ChrisViviers/Racing-Sim-Rig/blob/main/RacingSim%20HE%20Blueprint.svg) | Laser cut template for the entire rig frame AS5600 Alternative (6mm material). |
 | [`Racing Wheel.stl`](https://github.com/ChrisViviers/Racing-Sim-Rig/blob/main/Racing%20Wheel.stl) | 3D printable racing wheel. |
 | [`8mmRodTAdapterPedal.stl`](https://github.com/ChrisViviers/Racing-Sim-Rig/blob/main/8mmRodTAdapterPedal.stl) | T-adapter for the pedal that attaches a rod perpendicular to another rod in the pedal assembly. |
 | [`80TGearPedalAdapter.stl`](https://github.com/ChrisViviers/Racing-Sim-Rig/blob/main/80TGearPedalAdapter.stl) | 80-tooth gear that attaches to the pedal. |
 | [`20TGear10kPotAdapter.stl`](https://github.com/ChrisViviers/Racing-Sim-Rig/blob/main/20TGear10kPotAdapter.stl) | 20-tooth gear that attaches to the potentiometers; connected to the 80T pedal gear via a timing belt. |
 | [`8mmRodMagnetAdapter.stl`](https://github.com/ChrisViviers/Racing-Sim-Rig/blob/main/8mmRodMagnetAdapter.stl) | Attaches the steering wheel's AS5600 magnet to an 8mm shaft. |
 | [`ShifterLaserToShaftAdapter.stl`](https://github.com/ChrisViviers/Racing-Sim-Rig/blob/main/ShifterLaserToShaftAdapter.stl) | Adapts the laser-cut design to an 8mm shaft for the sequential shifter. |
+
 
 ---
 
