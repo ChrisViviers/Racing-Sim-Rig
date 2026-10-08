@@ -1,0 +1,144 @@
+import board
+import busio
+import bitbangio
+import digitalio
+import time
+import usb_hid
+from hid_gamepad import Gamepad
+import adafruit_as5600
+
+# ==========================================
+# 1. HARDWARE CALIBRATION
+# ==========================================
+# --- Steering (AS5600, Hardware I2C0: GP1/GP0) ---
+STEERING_CENTER = 1030
+SENSOR_RANGE    = 4096  # 12-bit angle register (0-4095)
+MAX_SWEEP       = 1675
+
+# --- Pedals (AS5600, Software I2C) ---
+THROTTLE_REST    = 2070
+THROTTLE_FLOORED = 2580
+
+BRAKE_REST       = 2585
+BRAKE_FLOORED    = 1885
+
+# --- HID axis limits (descriptor declares signed axes) ---
+AXIS_MIN = -127
+AXIS_MAX = 127
+
+# ==========================================
+# 2. HARDWARE INITIALIZATION
+# ==========================================
+gamepad = Gamepad(usb_hid.devices)
+
+# Steering: Hardware I2C0
+i2c_steering = busio.I2C(board.GP1, board.GP0)
+as5600_steering = adafruit_as5600.AS5600(i2c_steering)
+
+# Brake: Software I2C (Yellow/SCL -> GP2, Blue/SDA -> GP3)
+i2c_brake = bitbangio.I2C(board.GP2, board.GP3)
+as5600_brake = adafruit_as5600.AS5600(i2c_brake)
+
+# Throttle: Software I2C (Yellow/SCL -> GP4, Blue/SDA -> GP5)
+i2c_throttle = bitbangio.I2C(board.GP4, board.GP5)
+as5600_throttle = adafruit_as5600.AS5600(i2c_throttle)
+
+
+def init_button(pin):
+    btn = digitalio.DigitalInOut(pin)
+    btn.direction = digitalio.Direction.INPUT
+    btn.pull = digitalio.Pull.UP
+    return btn
+
+
+buttons = [
+    init_button(board.GP6),
+    init_button(board.GP7),
+    init_button(board.GP8),
+    init_button(board.GP9),
+    init_button(board.GP10),
+    init_button(board.GP11),
+    init_button(board.GP12),
+    init_button(board.GP13)
+]
+
+# ==========================================
+# 3. MAPPING FUNCTIONS
+# ==========================================
+def map_pedal(x, in_rest, in_floored):
+    """
+    Maps a raw AS5600 angle reading onto the full signed HID axis:
+    rest = -127, floored = +127. The HID descriptor declares axes as
+    signed, so this gives the host a normal full-travel pedal axis.
+    """
+    if in_rest < in_floored:
+        clamped = max(in_rest, min(x, in_floored))
+        fraction = (clamped - in_rest) / float(in_floored - in_rest)
+    else:
+        clamped = min(in_rest, max(x, in_floored))
+        fraction = (in_rest - clamped) / float(in_rest - in_floored)
+    scaled = int(round(fraction * (AXIS_MAX - AXIS_MIN) + AXIS_MIN))
+    return max(AXIS_MIN, min(AXIS_MAX, scaled))
+
+
+def get_steering_axis(raw_angle):
+    """
+    Clamps steering to physical hard-stop range, unwrapping the
+    AS5600's 4095/0 rollover so it doesn't snap mid-turn.
+    """
+    diff = raw_angle - STEERING_CENTER
+
+    if diff > SENSOR_RANGE / 2:
+        diff -= SENSOR_RANGE
+    elif diff < -SENSOR_RANGE / 2:
+        diff += SENSOR_RANGE
+
+    clamped_diff = max(-MAX_SWEEP, min(MAX_SWEEP, diff))
+    scaled = int((clamped_diff / float(MAX_SWEEP)) * AXIS_MAX)
+    return max(AXIS_MIN, min(AXIS_MAX, scaled))
+
+
+# ==========================================
+# 4. MAIN TRANSMISSION LOOP
+# ==========================================
+print("Sim Rig Controller Active on Report ID 5!")
+
+last_steering_hid = 0          # Centered
+last_throttle_hid = AXIS_MIN   # Released
+last_brake_hid = AXIS_MIN      # Released
+
+while True:
+    # --- Steering ---
+    try:
+        last_steering_hid = get_steering_axis(as5600_steering.angle)
+    except Exception:
+        pass
+    steering_hid = last_steering_hid
+
+    # --- Throttle ---
+    try:
+        last_throttle_hid = map_pedal(as5600_throttle.angle, THROTTLE_REST, THROTTLE_FLOORED)
+    except Exception:
+        pass
+    throttle_hid = last_throttle_hid
+
+    # --- Brake ---
+    try:
+        last_brake_hid = map_pedal(as5600_brake.angle, BRAKE_REST, BRAKE_FLOORED)
+    except Exception:
+        pass
+    brake_hid = last_brake_hid
+
+    # --- Digital Buttons ---
+    button_mask = 0
+    for i, btn in enumerate(buttons):
+        if not btn.value:  # Active LOW (pull-up resistors enabled)
+            button_mask |= (1 << i)
+
+    # --- Single Unified Report ---
+    # x = Steering (-127 left to 127 right)
+    # y = Throttle (-127 released to 127 floored)
+    # z = Brake    (-127 released to 127 floored)
+    gamepad.report(buttons=button_mask, x=steering_hid, y=throttle_hid, z=brake_hid, rz=0)
+
+    time.sleep(0.005)  # ~200Hz refresh rate
